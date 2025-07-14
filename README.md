@@ -117,9 +117,10 @@ This is the recommended way to run the application, as it encapsulates all depen
     After the image is built, run the container. Ensure LM Studio is running (either GUI or command-line server) if you plan to use the local LLM.
 
     ```bash
-    docker run -p 3001:3001 --name ai-assistant --env-file ./.env no-js-ai-assistant:latest
+    docker run -d -p 3001:3001 --name ai-assistant --env-file ./.env no-js-ai-assistant:latest
     ```
 
+      * `-d`: Runs the container in **detached mode**, meaning it runs in the background and does not block your terminal.
       * `-p 3001:3001`: Maps port 3001 on your host machine to port 3001 inside the Docker container.
       * `--name ai-assistant`: Assigns a name to your container for easier management.
       * `--env-file ./.env`: Tells Docker to load environment variables from your `.env` file into the container.
@@ -129,7 +130,7 @@ This is the recommended way to run the application, as it encapsulates all depen
     If you are running Docker on Linux, `host.docker.internal` might not resolve correctly by default. You may need to add an extra flag to the `docker run` command:
 
     ```bash
-    docker run -p 3001:3001 --name ai-assistant --env-file ./.env --add-host host.docker.internal:host-gateway no-js-ai-assistant:latest
+    docker run -d -p 3001:3001 --name ai-assistant --env-file ./.env --add-host host.docker.internal:host-gateway no-js-ai-assistant:latest
     ```
 
     This maps `host.docker.internal` to your host machine's IP address, allowing the Docker container to communicate with LM Studio running directly on your host.
@@ -175,6 +176,42 @@ The `.env` file is crucial for configuring the application.
   * `AUTH_USERNAME`: The username for basic authentication.
   * `AUTH_PASSWORD`: The password for basic authentication.
 
+### Docker Container Management
+
+Once your Docker container is running, you might need to manage its lifecycle.
+
+* **View Running Containers:**
+    To see a list of your running Docker containers:
+    ```bash
+    docker ps
+    ```
+
+* **View Container Logs:**
+    To view the output logs from your running application inside the container (useful for debugging):
+    ```bash
+    docker logs ai-assistant
+    ```
+
+* **Stop the Container:**
+    To gracefully stop the running application container:
+    ```bash
+    docker stop ai-assistant
+    ```
+
+* **Remove the Container:**
+    After stopping, if you want to completely remove the container instance (e.g., to create a fresh one):
+    ```bash
+    docker rm ai-assistant
+    ```
+    *(Note: You can only remove a container after it has been stopped.)*
+
+* **Remove the Docker Image:**
+    If you want to remove the built Docker image from your system (e.g., to rebuild it from scratch, or free up space):
+    ```bash
+    docker rmi no-js-ai-assistant:latest
+    ```
+    *(Note: You must stop and remove any containers using the image before you can remove the image itself.)*
+    
 ## Troubleshooting
 
   * **"Authentication Required" / "Unauthorized"**: Ensure you are entering the correct `AUTH_USERNAME` and `AUTH_PASSWORD` as set in your `.env` file.
