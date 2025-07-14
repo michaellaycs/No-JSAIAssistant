@@ -58,16 +58,16 @@ This project uses environment variables for sensitive information and configurat
 Copy the following content into your `.env` file and replace the placeholder values:
 
 ```dotenv
-# Google Gemini API Key (Optional: Only needed if you want to use Gemini)
-GEMINI_API_URL_FLASH=[https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent](https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent)
+# Google Gemini API Key
+GEMINI_API_URL_FLASH=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
 GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE # Replace with your actual Gemini API Key
 
-# LM Studio Configuration (Required: If you want to use a local LLM)
+# LM Studio Configuration
 # This URL points to the LM Studio local inference server from within the Docker container.
-LM_STUDIO_LOCAL_API_URL=[http://host.docker.internal:1234/v1/chat/completions](http://host.docker.internal:1234/v1/chat/completions)
+LM_STUDIO_LOCAL_API_URL=http://host.docker.internal:1234/v1/chat/completions
 LM_STUDIO_MODEL_ID=stabilityai_-_stablelm-zephyr-3b # This is the default model ID. Change if you download a different one.
 
-# Basic Authentication (Required)
+# Basic Authentication
 AUTH_USERNAME=your_chosen_username
 AUTH_PASSWORD=your_chosen_password
 ```
@@ -88,14 +88,14 @@ If you plan to use a local LLM, you need to set up LM Studio.
 2.  **Launch LM Studio GUI and Download a Model:**
 
       * Open LM Studio.
-      * In the LM Studio interface, navigate to the "Discover" or "Models" section.
+      * In the LM Studio interface, navigate to the search bar at the top.
       * Search for the model specified in your `.env` file, e.g., `stabilityai/stablelm-zephyr-3b`.
-      * Select a compatible quantized version (e.g., `Q4_K_M` or `Q5_K_M`) and click "Download".
+      * Select a compatible quantized version (e.g., `Q4_K_M` or `Q5_K_M`) and download it.
 
 3.  **Start the Local Inference Server:**
 
-      * Once the model is downloaded, go to the "Local Inference Server" tab (usually represented by a `>` icon on the left sidebar).
-      * Load the downloaded model into the server.
+      * Once the model is downloaded, go to the "Developer" tab (usually represented by a `>` icon on the left sidebar).
+      * Start the server and load the downloaded model into the server.
       * Ensure the server is running on **Port 1234**. You can check and configure this in the server settings within LM Studio.
       * Keep the LM Studio GUI application open; the server must be running *before* you start your Docker container if you intend to use the local LLM.
 
