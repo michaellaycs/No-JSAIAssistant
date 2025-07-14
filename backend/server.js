@@ -7,7 +7,7 @@ const axios = require('axios');
 const fs = require('fs').promises;
 const { encode } = require('html-entities');
 const rateLimit = require('express-rate-limit');
-
+const { marked } = require('marked');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -67,7 +67,7 @@ async function initializeDatabase() {
 // Middleware
 const chatLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 10, // Increased limit slightly for conversation
+    max: 10,
     message: '<h1>Too many requests.</h1><p>Please try again after 1 minute.</p>',
     standardHeaders: true,
     legacyHeaders: false,
@@ -99,6 +99,29 @@ app.use(basicAuth);
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 // Helper Functions
+const insertMessage = (sender, content, timestamp = new Date().toISOString()) => {
+    return new Promise((resolve, reject) => {
+        let contentToSave;
+
+        if (sender === 'ai') {
+            // Convert Markdown output from AI to HTML for rendering
+            contentToSave = marked.parse(content);
+        } else {
+            // Always encode user input to prevent XSS
+            contentToSave = encode(content);
+        }
+
+        db.run(
+            'INSERT INTO messages (sender, content, timestamp) VALUES (?, ?, ?)',
+            [sender, contentToSave, timestamp],
+            function(err) {
+                if (err) return reject(err);
+                resolve({ id: this.lastID });
+            }
+        );
+    });
+};
+
 async function getChatHistory() {
     return new Promise((resolve, reject) => {
         // Fetch last 50 messages to avoid overloading the context window
@@ -123,7 +146,7 @@ app.get('/', async (req, res) => {
         const chatHistoryHtml = messages.map(msg => {
             const messageClass = msg.sender === 'user' ? 'user-message' : (msg.sender === 'ai' ? 'ai-message' : 'system-message');
             const prefix = msg.sender === 'user' ? 'You: ' : (msg.sender === 'ai' ? 'AI: ' : '');
-            return `<div class="message ${messageClass}"><p>${prefix}${encode(msg.content)}</p></div>`;
+            return `<div class="message ${messageClass}"><p>${prefix}${msg.content}</p></div>`;
         }).join('');
         htmlContent = htmlContent.replace(/<div class="chat-history" id="chatHistory">[\s\S]*?<\/div>/, `<div class="chat-history" id="chatHistory">${chatHistoryHtml}</div>`);
 
@@ -168,17 +191,13 @@ app.post('/chat', chatLimiter, async (req, res) => {
     }
 
     try {
-        // Insert the new user message first
-        await db.run('INSERT INTO messages (sender, content) VALUES (?, ?)', ['user', userMessage]);
+        await insertMessage('user', userMessage);
         
-        // Fetch the entire conversation history to build context
         const history = await getChatHistory();
 
-        // Get the AI response, now with context
         const aiResponseContent = await getLlmResponse(history, modelConfig);
 
-        // Save the AI's response
-        await db.run('INSERT INTO messages (sender, content) VALUES (?, ?)', ['ai', aiResponseContent]);
+        await insertMessage('ai', aiResponseContent);
 
         res.redirect(`/?selectedModel=${llm_model}`);
     } catch (error) {
@@ -193,7 +212,6 @@ app.post('/chat', chatLimiter, async (req, res) => {
         if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND' || error.code === 'EHOSTUNREACH') {
             errorMessage = `Failed to connect to the AI model at ${modelConfig.url}. Please ensure the AI server is running and accessible.`;
         } else if (error.response) {
-            // Handle HTTP errors more specifically
             if (error.response.status === 404) {
                 errorMessage = `AI Model Error: The API endpoint '${modelConfig.url}' was not found (404). Please verify the model URL in your configuration.`;
             } else if (error.response.status >= 400 && error.response.status < 500) {
@@ -223,7 +241,7 @@ async function getLlmResponse(history, modelConfig) {
 
     if (provider === 'lm-studio') {
         const messages = conversationHistory.map(msg => ({
-            role: msg.sender === 'ai' ? 'assistant' : 'user', // Map 'ai' to 'assistant'
+            role: msg.sender === 'ai' ? 'assistant' : 'user',
             content: msg.content
         }));
 
@@ -234,7 +252,7 @@ async function getLlmResponse(history, modelConfig) {
     } else if (provider === 'gemini') {
         requestUrl = `${url}?key=${api_key}`;
         const contents = conversationHistory.map(msg => ({
-            role: msg.sender === 'ai' ? 'model' : 'user', // Map 'ai' to 'model'
+            role: msg.sender === 'ai' ? 'model' : 'user',
             parts: [{ text: msg.content }]
         }));
 
@@ -251,7 +269,6 @@ async function getLlmResponse(history, modelConfig) {
         return llmResponse.data.candidates[0]?.content?.parts[0]?.text || "Sorry, I couldn't get a response from the AI.";
     }
 }
-
 
 // Route to clear chat history
 app.post('/clear-history', async (req, res) => {
