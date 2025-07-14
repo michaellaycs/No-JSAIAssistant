@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>No-JS AI Assistant</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>No-JS AI Assistant</h1>
+        
+        <div class="flash-messages-container">
+            </div>
+
+        <div class="chat-history" id="chatHistory">
+            </div>
+
+        <form action="/chat" method="POST" class="chat-form">
+            <div class="chat-input-area">
+                <label for="message">Type your message here...</label>
+                <textarea id="message" name="message" rows="4" required></textarea>
+                
+                <br> 
+                <label for="llm_model">Choose AI Model:</label>
+                <select id="llm_model" name="llm_model">
+                    <option value="lm-studio-local-llm">Lm Studio Local Llm</option>
+                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                </select>
+                <br><br> 
+
+                <button type="submit">Send</button>
+            </div>
+        </form>
+
+        <div class="action-buttons-group">
+            <form action="/clear-history" method="POST" class="clear-history-form">
+                <button type="submit" class="clear-button">Clear Chat History</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
