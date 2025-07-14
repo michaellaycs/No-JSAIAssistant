@@ -8,6 +8,7 @@ The application includes basic chat functionality, chat history persistence usin
 
   * **Dual AI Model Support:** Seamlessly switch between Google Gemini (cloud-based) and a local LLM (via LM Studio).
   * **Chat History:** Persists chat conversations in a local SQLite database.
+  * **Conversation Context Maintenance:** The application maintains context by sending previous messages to the AI model, enabling more coherent and continuous conversations.
   * **Basic Authentication:** Secure your application with a simple username/password.
   * **No JavaScript Frontend:** A pure HTML/CSS frontend for simplicity and broad compatibility.
   * **Dockerized Deployment:** Easily run the entire application using Docker.
